@@ -1,0 +1,73 @@
+name: job-tracker
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: jt-postgres
+    environment:
+      POSTGRES_USER: jobtracker
+      POSTGRES_PASSWORD: localdev
+      POSTGRES_DB: jobtracker
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobtracker -d jobtracker"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ../../job-tracker-api
+    container_name: jt-api
+    environment:
+      # "postgres", not "localhost": inside the compose network,
+      # services reach each other by service name.
+      DATABASE_URL: postgres://jobtracker:localdev@postgres:5432/jobtracker?sslmode=disable
+      HTTP_PORT: "8080"
+      LOG_LEVEL: debug
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ../../job-tracker-web
+      dockerfile: apps/web/Dockerfile
+    container_name: jt-web
+    environment:
+      API_URL: http://api:8080
+      AUTH_SECRET: local-dev-secret-not-for-production
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  landing:
+    build:
+      context: ../../job-tracker-web
+      dockerfile: apps/landing/Dockerfile
+    container_name: jt-landing
+    ports:
+      - "3001:3000"
+
+  worker:
+    build:
+      context: ../../job-tracker-worker
+    container_name: jt-worker
+    environment:
+      DATABASE_URL: postgres://jobtracker:localdev@postgres:5432/jobtracker?sslmode=disable
+      LOG_LEVEL: debug
+      POLL_INTERVAL: "5"
+      SHUTDOWN_WAIT: "15"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
