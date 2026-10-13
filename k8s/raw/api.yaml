@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: job-tracker
+  labels:
+    app: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: job-tracker-api:REPLACE_ME
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              value: postgres://jobtracker:localdev@postgres:5432/jobtracker?sslmode=disable
+            - name: HTTP_PORT
+              value: "8080"
+            - name: LOG_LEVEL
+              value: debug
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            periodSeconds: 5
+            # /readyz pings the DB with a 2s timeout; the 1s default would fail first.
+            timeoutSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: job-tracker
+spec:
+  type: NodePort
+  selector:
+    app: api
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
