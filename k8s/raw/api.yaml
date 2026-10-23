@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         app: api
+      annotations:
+        checksum/config: CONFIG_HASH
     spec:
       containers:
         - name: api
@@ -21,15 +23,22 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: api-config
           env:
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: shared-config
+                  key: GOOGLE_CLIENT_ID
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: password
             - name: DATABASE_URL
-              value: postgres://jobtracker:localdev@postgres:5432/jobtracker?sslmode=disable
-            - name: HTTP_PORT
-              value: "8080"
-            - name: LOG_LEVEL
-              value: debug
-            - name: COOKIE_SECURE
-              value: "false"
+              value: postgres://jobtracker:$(DB_PASSWORD)@postgres:5432/jobtracker?sslmode=disable
           resources:
             requests:
               cpu: 50m

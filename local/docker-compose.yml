@@ -40,8 +40,9 @@ services:
       dockerfile: apps/web/Dockerfile
     container_name: jt-web
     environment:
-      API_URL: http://api:8080
-      AUTH_SECRET: local-dev-secret-not-for-production
+      API_INTERNAL_URL: http://api:8080
+      LANDING_URL: http://localhost:3001
+      GOOGLE_CLIENT_ID: ""
       NODE_ENV: production
     ports:
       - "3000:3000"

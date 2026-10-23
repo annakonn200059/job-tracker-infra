@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         app: web
+      annotations:
+        checksum/config: CONFIG_HASH
     spec:
       containers:
         - name: web
@@ -21,11 +23,11 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
-          env:
-            - name: API_INTERNAL_URL
-              value: http://api.job-tracker.svc.cluster.local:8080
-            - name: HOSTNAME
-              value: "0.0.0.0"
+          envFrom:
+            - configMapRef:
+                name: shared-config
+            - configMapRef:
+                name: web-config
           resources:
             requests:
               cpu: 50m
