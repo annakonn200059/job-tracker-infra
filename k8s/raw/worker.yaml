@@ -42,3 +42,10 @@ spec:
               memory: 64Mi
             limits:
               memory: 256Mi
+          livenessProbe:
+            exec:
+              # Fails if the heartbeat is missing or older than 60s.
+              # Must exceed POLL_INTERVAL (5) + the longest job (3).
+              command: ["sh", "-c", "test $(( $(date +%s) - $(stat -c %Y /tmp/heartbeat) )) -lt 60"]
+            periodSeconds: 10
+            failureThreshold: 3
