@@ -17,6 +17,8 @@ spec:
       annotations:
         checksum/config: CONFIG_HASH
     spec:
+      # PRE_SHUTDOWN_WAIT (5) + SHUTDOWN_WAIT (15) + headroom.
+      terminationGracePeriodSeconds: 40
       containers:
         - name: api
           image: job-tracker-api:REPLACE_ME
@@ -52,6 +54,13 @@ spec:
             periodSeconds: 5
             # /readyz pings the DB with a 2s timeout; the 1s default would fail first.
             timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service

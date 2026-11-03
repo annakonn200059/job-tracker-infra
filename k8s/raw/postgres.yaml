@@ -39,6 +39,11 @@ spec:
               memory: 64Mi
             limits:
               memory: 256Mi
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "jobtracker", "-d", "jobtracker"]
+            periodSeconds: 5
+            timeoutSeconds: 3
       volumes:
         - name: postgres-secret
           secret:
