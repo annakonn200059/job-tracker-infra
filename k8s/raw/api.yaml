@@ -41,6 +41,8 @@ spec:
                   key: password
             - name: DATABASE_URL
               value: postgres://jobtracker:$(DB_PASSWORD)@postgres:5432/jobtracker?sslmode=disable
+            - name: GOMEMLIMIT
+              value: "220MiB"
           resources:
             requests:
               cpu: 50m
